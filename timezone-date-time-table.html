@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Timezone Date-Time Table</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f5f7fb;
+      --panel: #ffffff;
+      --text: #172033;
+      --muted: #667085;
+      --border: #d9dee8;
+      --accent: #2563eb;
+      --accent-hover: #1d4ed8;
+      --danger: #b42318;
+      --header: #eef3ff;
+      --row-alt: #fafbfc;
+      --sticky: rgba(255,255,255,0.96);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0f172a;
+        --panel: #111827;
+        --text: #e5e7eb;
+        --muted: #9ca3af;
+        --border: #2f3a4a;
+        --accent: #60a5fa;
+        --accent-hover: #93c5fd;
+        --danger: #f97066;
+        --header: #172554;
+        --row-alt: #151d2c;
+        --sticky: rgba(17,24,39,0.96);
+      }
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .container {
+      max-width: 1500px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      font-size: 1.75rem;
+    }
+
+    .subtitle {
+      margin: 0 0 20px;
+      color: var(--muted);
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+      margin-bottom: 18px;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(120px, 1fr));
+      gap: 12px;
+      align-items: end;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    label {
+      font-size: 0.82rem;
+      font-weight: 650;
+      color: var(--muted);
+    }
+
+    input, select, button {
+      font: inherit;
+    }
+
+    input, select {
+      width: 100%;
+      min-height: 40px;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      background: var(--panel);
+      color: var(--text);
+      padding: 8px 10px;
+    }
+
+    button {
+      min-height: 40px;
+      border: 0;
+      border-radius: 9px;
+      padding: 9px 14px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: var(--accent);
+      color: white;
+    }
+
+    .primary:hover { background: var(--accent-hover); }
+
+    .secondary {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .quick-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .quick-actions button {
+      min-height: 34px;
+      padding: 6px 11px;
+      font-size: 0.86rem;
+    }
+
+    .timezone-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .timezone-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 7px 10px;
+      background: var(--panel);
+      font-size: 0.88rem;
+    }
+
+    .timezone-chip button {
+      min-height: auto;
+      padding: 0;
+      background: transparent;
+      color: var(--danger);
+      font-size: 1rem;
+    }
+
+    .status {
+      margin-top: 10px;
+      min-height: 20px;
+      color: var(--muted);
+      font-size: 0.86rem;
+    }
+
+    .table-wrap {
+      overflow: auto;
+      max-height: 70vh;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--panel);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      min-width: 720px;
+    }
+
+    th, td {
+      border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 9px 12px;
+      white-space: nowrap;
+      text-align: left;
+      font-variant-numeric: tabular-nums;
+    }
+
+    th:last-child, td:last-child { border-right: 0; }
+    tr:last-child td { border-bottom: 0; }
+
+    thead th {
+      position: sticky;
+      top: 0;
+      z-index: 3;
+      background: var(--header);
+      font-size: 0.86rem;
+    }
+
+    tbody tr:nth-child(even) td {
+      background: var(--row-alt);
+    }
+
+    tbody td:first-child,
+    thead th:first-child {
+      position: sticky;
+      left: 0;
+      z-index: 2;
+      background: var(--sticky);
+      font-weight: 700;
+    }
+
+    thead th:first-child {
+      z-index: 4;
+      background: var(--header);
+    }
+
+    .date-part {
+      font-weight: 700;
+    }
+
+    .time-part {
+      color: var(--muted);
+      margin-left: 6px;
+    }
+
+    .day-shift {
+      display: inline-block;
+      margin-left: 7px;
+      font-size: 0.72rem;
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    @media (max-width: 900px) {
+      .controls { grid-template-columns: repeat(2, minmax(140px, 1fr)); }
+      .table-wrap { max-height: 65vh; }
+    }
+
+    @media (max-width: 560px) {
+      .container { padding: 12px; }
+      .controls { grid-template-columns: 1fr; }
+      .table-wrap { max-height: 60vh; }
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <h1>Timezone Date-Time Table</h1>
+    <p class="subtitle">Generate a full-day comparison table in fixed 5-minute increments. Each column represents a UTC offset.</p>
+
+    <section class="panel">
+      <div class="controls">
+        <div class="field">
+          <label for="baseDate">Base date</label>
+          <input id="baseDate" type="date" />
+        </div>
+
+        <div class="field">
+          <label for="timezoneName">Name (optional)</label>
+          <input id="timezoneName" type="text" placeholder="Example: IST" />
+        </div>
+
+        <div class="field">
+          <label for="offsetHours">UTC offset hours</label>
+          <input id="offsetHours" type="number" min="-14" max="14" step="1" value="0" />
+        </div>
+
+        <div class="field">
+          <label for="offsetMinutes">Additional minutes</label>
+          <select id="offsetMinutes">
+            <option value="0">00</option>
+            <option value="15">15</option>
+            <option value="30">30</option>
+            <option value="45">45</option>
+          </select>
+        </div>
+
+        <button id="addTimezone" class="primary" type="button">Add timezone</button>
+      </div>
+
+      <div class="quick-actions">
+        <button type="button" class="secondary preset" data-name="GMT+0" data-offset="0">Add GMT+0</button>
+        <button type="button" class="secondary preset" data-name="IST" data-offset="330">Add IST</button>
+        <button type="button" class="secondary preset" data-name="SGT" data-offset="480">Add SGT</button>
+        <button id="reset" type="button" class="secondary">Reset to local timezone</button>
+        <button id="exportCsv" type="button" class="secondary">Export CSV</button>
+      </div>
+
+      <div id="timezoneList" class="timezone-list"></div>
+      <div id="status" class="status"></div>
+    </section>
+
+    <section class="table-wrap" aria-live="polite">
+      <table id="timezoneTable">
+        <thead></thead>
+        <tbody></tbody>
+      </table>
+    </section>
+  </main>
+
+  <script>
+    (() => {
+      const baseDateInput = document.getElementById('baseDate');
+      const timezoneNameInput = document.getElementById('timezoneName');
+      const offsetHoursInput = document.getElementById('offsetHours');
+      const offsetMinutesSelect = document.getElementById('offsetMinutes');
+      const timezoneList = document.getElementById('timezoneList');
+      const status = document.getElementById('status');
+      const table = document.getElementById('timezoneTable');
+
+      const localOffsetMinutes = -new Date().getTimezoneOffset();
+      const localZoneName = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Local timezone';
+
+      const STORAGE_KEY = 'timezoneDateTimeTable.zones.v1';
+      let zones = [];
+
+      function pad(value) {
+        return String(value).padStart(2, '0');
+      }
+
+      function formatOffset(totalMinutes) {
+        const sign = totalMinutes >= 0 ? '+' : '-';
+        const absolute = Math.abs(totalMinutes);
+        return `UTC${sign}${pad(Math.floor(absolute / 60))}:${pad(absolute % 60)}`;
+      }
+
+      function localDateValue() {
+        const now = new Date();
+        return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+      }
+
+      function getBaseMidnightUtc() {
+        const [year, month, day] = baseDateInput.value.split('-').map(Number);
+        return Date.UTC(year, month - 1, day, 0, 0, 0);
+      }
+
+      function createZoneId() {
+        return crypto.randomUUID
+          ? crypto.randomUUID()
+          : `${Date.now()}-${Math.random()}`;
+      }
+
+      function createDefaultZones() {
+        return [
+          {
+            id: createZoneId(),
+            name: 'GMT+0',
+            offsetMinutes: 0
+          },
+          {
+            id: createZoneId(),
+            name: localZoneName,
+            offsetMinutes: localOffsetMinutes
+          }
+        ];
+      }
+
+      function moveZone(draggedId, targetId) {
+        if (!draggedId || !targetId || draggedId === targetId) return;
+
+        const fromIndex = zones.findIndex(zone => zone.id === draggedId);
+        const toIndex = zones.findIndex(zone => zone.id === targetId);
+
+        if (fromIndex < 0 || toIndex < 0) return;
+
+        const [movedZone] = zones.splice(fromIndex, 1);
+        zones.splice(toIndex, 0, movedZone);
+
+        saveState();
+        render();
+      }
+
+      function enableDrag(element, zoneId) {
+        element.draggable = true;
+        element.dataset.zoneId = zoneId;
+        element.title = 'Drag to reorder';
+
+        element.addEventListener('dragstart', event => {
+          element.classList.add('dragging');
+          event.dataTransfer.effectAllowed = 'move';
+          event.dataTransfer.setData('text/plain', zoneId);
+        });
+
+        element.addEventListener('dragend', () => {
+          element.classList.remove('dragging');
+          document.querySelectorAll('.drag-over').forEach(item => {
+            item.classList.remove('drag-over');
+          });
+        });
+
+        element.addEventListener('dragover', event => {
+          event.preventDefault();
+          event.dataTransfer.dropEffect = 'move';
+          element.classList.add('drag-over');
+        });
+
+        element.addEventListener('dragleave', () => {
+          element.classList.remove('drag-over');
+        });
+
+        element.addEventListener('drop', event => {
+          event.preventDefault();
+          element.classList.remove('drag-over');
+          moveZone(event.dataTransfer.getData('text/plain'), zoneId);
+        });
+      }
+
+      function saveState() {
+        const state = {
+          baseDate: baseDateInput.value,
+          zones: zones.map(({ name, offsetMinutes }) => ({
+            name,
+            offsetMinutes
+          }))
+        };
+
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      }
+
+      function loadState() {
+        try {
+          const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+
+          if (!saved || typeof saved !== 'object') {
+            return null;
+          }
+
+          const savedZones = Array.isArray(saved.zones)
+            ? saved.zones
+                .filter(zone =>
+                  zone &&
+                  typeof zone.name === 'string' &&
+                  typeof zone.offsetMinutes === 'number' &&
+                  zone.offsetMinutes >= -14 * 60 &&
+                  zone.offsetMinutes <= 14 * 60
+                )
+                .map(zone => ({
+                  id: createZoneId(),
+                  name: zone.name,
+                  offsetMinutes: zone.offsetMinutes
+                }))
+            : [];
+
+          return {
+            baseDate: typeof saved.baseDate === 'string' ? saved.baseDate : '',
+            zones: savedZones
+          };
+        } catch (error) {
+          console.warn('Could not restore saved view state.', error);
+          return null;
+        }
+      }
+
+      function restoreDefaults() {
+        localStorage.removeItem(STORAGE_KEY);
+        zones = createDefaultZones();
+        baseDateInput.value = localDateValue();
+        saveState();
+        render();
+        status.textContent = 'Default view restored.';
+      }
+
+      function addZone(name, offsetMinutes) {
+        const trimmedName = name.trim() || formatOffset(offsetMinutes);
+        const duplicate = zones.some(zone =>
+          zone.name.toLowerCase() === trimmedName.toLowerCase() &&
+          zone.offsetMinutes === offsetMinutes
+        );
+
+        if (duplicate) {
+          status.textContent = `${trimmedName} is already present.`;
+          return;
+        }
+
+        zones.push({
+          id: createZoneId(),
+          name: trimmedName,
+          offsetMinutes
+        });
+
+        saveState();
+        status.textContent = `${trimmedName} added.`;
+        render();
+      }
+
+      function removeZone(id) {
+        if (zones.length === 1) {
+          status.textContent = 'At least one timezone column must remain.';
+          return;
+        }
+        zones = zones.filter(zone => zone.id !== id);
+        saveState();
+        render();
+      }
+
+      function formatCell(timestamp, zone, baseDate) {
+        const shifted = new Date(timestamp + zone.offsetMinutes * 60000);
+        const year = shifted.getUTCFullYear();
+        const month = pad(shifted.getUTCMonth() + 1);
+        const day = pad(shifted.getUTCDate());
+        const hour = pad(shifted.getUTCHours());
+        const minute = pad(shifted.getUTCMinutes());
+
+        const shiftedDateKey = `${year}-${month}-${day}`;
+        const baseDateKey = baseDateInput.value;
+
+        let dayShift = '';
+        if (shiftedDateKey > baseDateKey) dayShift = '<span class="day-shift">+1 day</span>';
+        if (shiftedDateKey < baseDateKey) dayShift = '<span class="day-shift">-1 day</span>';
+
+        return `<span class="date-part">${day}-${month}-${year}</span><span class="time-part">${hour}:${minute}</span>${dayShift}`;
+      }
+
+      function renderZoneChips() {
+        timezoneList.innerHTML = '';
+        for (const zone of zones) {
+          const chip = document.createElement('div');
+          chip.className = 'timezone-chip';
+          chip.innerHTML = `
+            <span><strong>${escapeHtml(zone.name)}</strong> (${formatOffset(zone.offsetMinutes)})</span>
+            <button type="button" aria-label="Remove ${escapeHtml(zone.name)}">×</button>
+          `;
+          chip.querySelector('button').addEventListener('click', event => {
+            event.stopPropagation();
+            removeZone(zone.id);
+          });
+
+          enableDrag(chip, zone.id);
+          timezoneList.appendChild(chip);
+        }
+      }
+
+      function escapeHtml(value) {
+        return String(value)
+          .replaceAll('&', '&amp;')
+          .replaceAll('<', '&lt;')
+          .replaceAll('>', '&gt;')
+          .replaceAll('"', '&quot;')
+          .replaceAll("'", '&#039;');
+      }
+
+      function render() {
+        if (!baseDateInput.value) return;
+
+        const interval = 5;
+        const baseUtc = getBaseMidnightUtc();
+        const referenceZone = zones[0];
+
+        table.tHead.innerHTML = '';
+        table.tBodies[0].innerHTML = '';
+
+        const headerRow = document.createElement('tr');
+        const sequenceHeader = document.createElement('th');
+        sequenceHeader.textContent = '#';
+        headerRow.appendChild(sequenceHeader);
+
+        for (const zone of zones) {
+          const th = document.createElement('th');
+          th.innerHTML = `${escapeHtml(zone.name)}<br><small>${formatOffset(zone.offsetMinutes)}</small>`;
+          enableDrag(th, zone.id);
+          headerRow.appendChild(th);
+        }
+        table.tHead.appendChild(headerRow);
+
+        const totalRows = Math.floor((24 * 60) / interval);
+        const tbody = table.tBodies[0];
+
+        for (let index = 0; index < totalRows; index++) {
+          const tr = document.createElement('tr');
+          const sequenceCell = document.createElement('td');
+          sequenceCell.textContent = String(index + 1);
+          tr.appendChild(sequenceCell);
+
+          const minutesFromStart = index * interval;
+          const instantUtc = baseUtc - referenceZone.offsetMinutes * 60000 + minutesFromStart * 60000;
+
+          for (const zone of zones) {
+            const td = document.createElement('td');
+            td.innerHTML = formatCell(instantUtc, zone);
+            tr.appendChild(td);
+          }
+
+          tbody.appendChild(tr);
+        }
+
+        renderZoneChips();
+        status.textContent = `${totalRows} rows generated for ${zones.length} timezone column${zones.length === 1 ? '' : 's'}.`;
+      }
+
+      function parseOffsetFromInputs() {
+        const hours = Number(offsetHoursInput.value);
+        const minutes = Number(offsetMinutesSelect.value);
+
+        if (!Number.isFinite(hours) || hours < -14 || hours > 14) {
+          throw new Error('Offset hours must be between -14 and +14.');
+        }
+
+        const sign = hours < 0 ? -1 : 1;
+        const total = hours * 60 + sign * minutes;
+
+        if (total < -14 * 60 || total > 14 * 60) {
+          throw new Error('The total UTC offset must be between UTC-14:00 and UTC+14:00.');
+        }
+
+        return total;
+      }
+
+      function exportCsv() {
+        const rows = [];
+        const header = ['#', ...zones.map(zone => `${zone.name} (${formatOffset(zone.offsetMinutes)})`)];
+        rows.push(header);
+
+        for (const tr of table.tBodies[0].rows) {
+          rows.push([...tr.cells].map(cell => cell.innerText.replace(/\s+/g, ' ').trim()));
+        }
+
+        const csv = rows
+          .map(row => row.map(value => `"${String(value).replaceAll('"', '""')}"`).join(','))
+          .join('\r\n');
+
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `timezone-table-${baseDateInput.value}.csv`;
+        link.click();
+        URL.revokeObjectURL(url);
+      }
+
+      document.getElementById('addTimezone').addEventListener('click', () => {
+        try {
+          const offset = parseOffsetFromInputs();
+          addZone(timezoneNameInput.value, offset);
+          timezoneNameInput.value = '';
+        } catch (error) {
+          status.textContent = error.message;
+        }
+      });
+
+      document.querySelectorAll('.preset').forEach(button => {
+        button.addEventListener('click', () => {
+          addZone(button.dataset.name, Number(button.dataset.offset));
+        });
+      });
+
+      document.getElementById('reset').addEventListener('click', restoreDefaults);
+
+      document.getElementById('exportCsv').addEventListener('click', exportCsv);
+      baseDateInput.addEventListener('change', () => {
+        saveState();
+        render();
+      });
+
+      const storedState = loadState();
+
+      if (storedState && storedState.zones.length > 0) {
+        zones = storedState.zones;
+        baseDateInput.value = storedState.baseDate || localDateValue();
+      } else {
+        zones = createDefaultZones();
+        baseDateInput.value = localDateValue();
+        saveState();
+      }
+
+      render();
+    })();
+  </script>
+</body>
+</html>
