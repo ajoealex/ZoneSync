@@ -1,5 +1,7 @@
 # ZoneSync
 
+Live app: [https://ajoealex.github.io/ZoneSync/](https://ajoealex.github.io/ZoneSync/)
+
 A visual tool for comparing date and time across multiple timezones side by side.
 
 ## What it does
