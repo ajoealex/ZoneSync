@@ -174,21 +174,17 @@ export function loadStoredState() {
           .map(zone => ({ id: createZoneId(), name: zone.name, offsetMinutes: zone.offsetMinutes }))
       : [];
 
-    return {
-      baseDate: typeof saved.baseDate === 'string' ? saved.baseDate : '',
-      zones: savedZones
-    };
+    return { zones: savedZones };
   } catch (error) {
     console.warn('Could not restore saved view state.', error);
     return null;
   }
 }
 
-export function saveState(baseDate, zones) {
+export function saveState(zones) {
   localStorage.setItem(
     STORAGE_KEY,
     JSON.stringify({
-      baseDate,
       zones: zones.map(({ name, offsetMinutes }) => ({ name, offsetMinutes }))
     })
   );

@@ -8,7 +8,7 @@ export default function TimezoneTable({
   baseDate,
   sliderIndex,
   setSliderIndex,
-  liveTrackingRef,
+  onManualSeek,
   moveZone,
   scrollSignal
 }) {
@@ -97,7 +97,7 @@ export default function TimezoneTable({
   }, [scrollSignal]);
 
   function handlePointerDown(event) {
-    liveTrackingRef.current = false;
+    onManualSeek();
     draggingRef.current = true;
     bandRef.current.setPointerCapture(event.pointerId);
     const bandRect = bandRef.current.getBoundingClientRect();
@@ -125,15 +125,15 @@ export default function TimezoneTable({
   function handleKeyDown(event) {
     if (event.key in STEP_KEYS) {
       event.preventDefault();
-      liveTrackingRef.current = false;
+      onManualSeek();
       setSliderIndex(prev => Math.min(TOTAL_ROWS - 1, Math.max(0, prev + STEP_KEYS[event.key])));
     } else if (event.key === 'Home') {
       event.preventDefault();
-      liveTrackingRef.current = false;
+      onManualSeek();
       setSliderIndex(0);
     } else if (event.key === 'End') {
       event.preventDefault();
-      liveTrackingRef.current = false;
+      onManualSeek();
       setSliderIndex(TOTAL_ROWS - 1);
     }
   }
